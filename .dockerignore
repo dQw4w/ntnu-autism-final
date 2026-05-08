@@ -1,0 +1,23 @@
+# Version control
+.git
+.gitignore
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+
+# Secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.claude
+*.sh
+
+# Docs (not needed at runtime)
+README.md
+project.txt

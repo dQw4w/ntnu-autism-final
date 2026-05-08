@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>理解光譜的另一面 — 自閉症互動體驗</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- ── Screen 1: Landing ─────────────────────────────────────────────── -->
+<div id="screen-landing" class="screen">
+  <div class="landing-logo">🌈</div>
+  <h1>理解光譜的另一面</h1>
+  <p class="subtitle">透過互動，認識自閉症者的世界</p>
+
+  <div class="intro-text">
+    自閉症是一個<strong>光譜</strong>，每個人的表現都不同。<br>
+    在這裡，你將扮演特定角色，與 AI 模擬的自閉症者互動並完成任務。<br>
+    旁邊有一位輔導顧問 AI，可以在你需要時給予建議。
+  </div>
+
+  <h2 class="section-title">選擇你要互動的對象</h2>
+  <div class="character-cards" id="character-cards"></div>
+</div>
+
+<!-- ── Screen 2: Scenario Selection ─────────────────────────────────── -->
+<div id="screen-scenarios" class="screen">
+  <div class="scenario-header">
+    <button class="back-btn" onclick="goBack('landing')">← 返回</button>
+    <div id="selected-character-info" class="selected-character-info"></div>
+  </div>
+  <h2 class="section-title">選擇情境</h2>
+  <div id="scenario-cards" class="scenario-cards"></div>
+</div>
+
+<!-- ── Screen 3: Chat ─────────────────────────────────────────────────── -->
+<div id="screen-chat" class="screen">
+  <!-- Header -->
+  <div class="chat-header" id="chat-header">
+    <button class="back-btn" onclick="goBack('scenarios')">← 返回</button>
+    <div class="chat-character-info">
+      <div class="chat-avatar" id="chat-avatar"></div>
+      <div>
+        <div class="chat-name" id="chat-character-name"></div>
+        <div class="chat-scenario" id="chat-scenario-name"></div>
+      </div>
+    </div>
+    <button class="helper-toggle-btn" id="helper-toggle-btn" onclick="toggleHelper()">
+      💡 輔助提示
+    </button>
+  </div>
+
+  <!-- Task accordion -->
+  <div class="task-accordion">
+    <button class="task-accordion-btn" onclick="toggleTask()">
+      <span>📋 任務說明</span>
+      <span class="accordion-arrow" id="accordion-arrow">▼</span>
+    </button>
+    <div class="task-content" id="task-content">
+      <div class="task-role"><strong>你的角色：</strong><span id="task-role-text"></span></div>
+      <div class="task-goal"><strong>任務目標：</strong><span id="task-goal-text"></span></div>
+      <div class="task-context"><strong>情境說明：</strong><span id="task-context-text"></span></div>
+    </div>
+  </div>
+
+  <!-- Layout: chat + helper -->
+  <div class="chat-layout">
+    <div class="chat-main">
+      <div class="messages-container" id="messages-container"></div>
+
+      <div class="chat-input-area">
+        <textarea
+          id="message-input"
+          placeholder="輸入你要說的話... (Enter 送出，Shift+Enter 換行)"
+          rows="2"
+          onkeydown="handleKeyDown(event)"
+        ></textarea>
+        <button class="send-btn" onclick="sendMessage()">送出</button>
+      </div>
+
+      <button class="complete-btn" onclick="checkCompletion()">
+        ✅ 我完成任務了！
+      </button>
+    </div>
+
+    <!-- Helper panel -->
+    <div class="helper-panel" id="helper-panel">
+      <div class="helper-header">
+        <span>💡 輔導顧問</span>
+        <button class="close-helper" onclick="toggleHelper()">✕</button>
+      </div>
+      <div class="helper-content" id="helper-content">
+        <p class="helper-placeholder">
+          開始對話後，點擊「取得建議」，<br>
+          輔導顧問會分析你的對話並給予具體建議。
+        </p>
+      </div>
+      <button class="get-advice-btn" onclick="getHelperAdvice()">
+        🔍 取得建議
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Screen 4: Completion ──────────────────────────────────────────── -->
+<div id="screen-completion" class="screen">
+  <div class="completion-container">
+    <div class="completion-icon">🎉</div>
+    <h1>任務完成！</h1>
+    <p class="completion-summary" id="completion-summary"></p>
+    <div class="completion-learning" id="completion-learning"></div>
+    <div class="completion-actions">
+      <button class="btn-primary" onclick="tryAgain()">🔄 再試一次</button>
+      <button class="btn-secondary" onclick="goBack('scenarios')">選其他情境</button>
+      <button class="btn-secondary" onclick="goBack('landing')">選其他人物</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loading Overlay ────────────────────────────────────────────────── -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p id="loading-text">載入中...</p>
+  </div>
+</div>
+
+<script src="/js/app.js?v=2"></script>
+</body>
+</html>
