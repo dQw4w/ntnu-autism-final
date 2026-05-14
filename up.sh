@@ -39,42 +39,36 @@ fi
 
 MODEL=${OLLAMA_MODEL:-qwen2:7b}
 
-# ── Start ollama first (no-op if already running) ─────────────────────────────
-docker compose up -d ollama
-
-# ── Wait for ollama ───────────────────────────────────────────────────────────
-echo "▶ 等待 Ollama 就緒..."
-TRIES=0
-MAX_TRIES=40
-until curl -sf --max-time 3 http://localhost:11434/api/tags > /dev/null 2>&1; do
-    TRIES=$((TRIES + 1))
-    if [ "$TRIES" -ge "$MAX_TRIES" ]; then
-        echo ""
-        echo "❌ Ollama 超過 2 分鐘未就緒，請檢查："
-        docker compose logs ollama --tail 20
-        exit 1
-    fi
-    printf '.'; sleep 3
-done
-echo ""
+# ── Guard: native Ollama must be running ─────────────────────────────────────
+if ! curl -sf --max-time 3 http://localhost:11434/api/tags > /dev/null 2>&1; then
+    echo "❌ 找不到 Ollama（http://localhost:11434）"
+    echo "   請先在 macOS 上啟動 Ollama："
+    echo "     brew install ollama   # 第一次安裝"
+    echo "     ollama serve          # 啟動"
+    exit 1
+fi
 
 # ── Pull model if missing ─────────────────────────────────────────────────────
-if ! docker compose exec ollama ollama list | grep -q "$MODEL"; then
+if ! ollama list | grep -q "^${MODEL}"; then
     echo "▶ 下載模型 $MODEL（首次需要幾分鐘）..."
-    docker compose exec ollama ollama pull "$MODEL"
+    ollama pull "$MODEL"
 fi
 
 # ── Start app ─────────────────────────────────────────────────────────────────
-echo "🚀 Starting Docker containers..."
-docker compose up --no-deps ${detach_str} app
-echo "✅ Docker containers are up and running."
+LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null \
+    || ipconfig getifaddr en1 2>/dev/null \
+    || echo "127.0.0.1")
 
-# ── Print URLs (only in detach mode, otherwise logs are streaming) ────────────
 if [ -n "$detach_str" ]; then
-    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null \
-        || ipconfig getifaddr en1 2>/dev/null \
-        || echo "127.0.0.1")
+    echo "🚀 Starting app container (detached)..."
+    docker compose up -d app
     echo ""
-    echo "  本機：http://localhost:8000"
-    echo "  區網：http://$LOCAL_IP:8000"
+    echo "  本機：http://localhost:8001"
+    echo "  區網：http://$LOCAL_IP:8001"
+    echo ""
+    echo "⚠️  背景模式：防睡眠未啟用。如需防止 Mac 休眠，請在另一個 Terminal 執行："
+    echo "     caffeinate -i"
+else
+    echo "🚀 Starting app container (防睡眠已啟用，關閉此 Terminal 即停止)..."
+    exec caffeinate -di docker compose up app
 fi

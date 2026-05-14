@@ -4,29 +4,17 @@ services:
   app:
     image: ${PROJECT_NAME:-ntnu-autism-final}:${PROJECT_VERSION:-latest}
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=http://host.docker.internal:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2:7b}
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - PAID_GEMINI_API_KEY=${PAID_GEMINI_API_KEY:-}
+      - PAID_GEMINI_ENABLED=${PAID_GEMINI_ENABLED:-true}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
-    restart: unless-stopped
-
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
     volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
+      - ./data:/app/data
     restart: unless-stopped
-
-volumes:
-  ollama_data:

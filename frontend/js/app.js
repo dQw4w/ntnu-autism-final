@@ -1,4 +1,6 @@
 // ── State ──────────────────────────────────────────────────────────────────
+let _pendingRetryBubble = null;
+
 const state = {
   characters: [],
   selectedCharacter: null,
@@ -22,7 +24,11 @@ const API = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const err = new Error(await res.text());
+      err.status = res.status;
+      throw err;
+    }
     return res.json();
   },
 };
@@ -216,8 +222,11 @@ async function sendMessage() {
     appendMessage('assistant', data.response);
     state.messages.push({ role: 'assistant', content: data.response });
   } catch (err) {
-    appendMessage('assistant',
-      '（系統錯誤：無法取得回應。請確認後端是否運行，並檢查 LLM 設定。）');
+    if (err.status === 503) {
+      _pendingRetryBubble = appendRetryBubble();
+    } else {
+      appendMessage('assistant', '（系統錯誤：無法取得回應。請確認後端是否運行，並檢查 LLM 設定。）');
+    }
     console.error(err);
   } finally {
     hideLoading();
@@ -227,12 +236,64 @@ async function sendMessage() {
   }
 }
 
-function handleKeyDown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
+function appendRetryBubble() {
+  const char = state.selectedCharacter;
+  const container = document.getElementById('messages-container');
+
+  const div = document.createElement('div');
+  div.className = 'message assistant';
+
+  const avatarEl = document.createElement('div');
+  avatarEl.className = 'msg-avatar';
+  avatarEl.textContent = char.avatar;
+  avatarEl.style.background = char.gradient;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble msg-retry-error';
+  bubble.innerHTML = `<span class="retry-error-text">（伺服器暫時無法回應）</span><button class="retry-btn" onclick="retryLastMessage()">重新生成</button>`;
+
+  div.appendChild(avatarEl);
+  div.appendChild(bubble);
+  container.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+async function retryLastMessage() {
+  if (state.loading) return;
+
+  if (_pendingRetryBubble) {
+    _pendingRetryBubble.remove();
+    _pendingRetryBubble = null;
+  }
+
+  showLoading(`${state.selectedCharacter.name} 思考中...`);
+  document.getElementById('message-input').disabled = true;
+  document.querySelector('.send-btn').disabled = true;
+
+  try {
+    const data = await API.post('/api/chat', {
+      character_id: state.selectedCharacter.id,
+      scenario_id: state.selectedScenario.id,
+      messages: state.messages,
+    });
+    appendMessage('assistant', data.response);
+    state.messages.push({ role: 'assistant', content: data.response });
+  } catch (err) {
+    if (err.status === 503) {
+      _pendingRetryBubble = appendRetryBubble();
+    } else {
+      appendMessage('assistant', '（系統錯誤：無法取得回應。請確認後端是否運行，並檢查 LLM 設定。）');
+    }
+    console.error(err);
+  } finally {
+    hideLoading();
+    document.getElementById('message-input').disabled = false;
+    document.querySelector('.send-btn').disabled = false;
+    document.getElementById('message-input').focus();
   }
 }
+
 
 // ── Helper AI ─────────────────────────────────────────────────────────────
 async function getHelperAdvice() {
@@ -296,10 +357,8 @@ async function checkCompletion() {
     showCompletionScreen(data);
   } catch (err) {
     hideLoading();
-    showCompletionScreen({
-      completed: true,
-      summary: '你完成了這次互動體驗！透過與自閉症者的對話，相信你對他們的溝通世界有了更深的了解。',
-    });
+    console.error(err);
+    alert('評估系統發生錯誤，請稍後再試。');
   }
 }
 
@@ -308,16 +367,28 @@ function showCompletionScreen(data) {
 
   const char = state.selectedCharacter;
   const scenario = state.selectedScenario;
+  const succeeded = data.completed === true;
 
+  const screen = document.getElementById('screen-completion');
+  screen.classList.toggle('failed', !succeeded);
+
+  const badge = document.getElementById('completion-badge');
+  badge.textContent = succeeded ? '✓ 任務成功' : '✗ 任務失敗';
+  badge.className = `completion-result-badge ${succeeded ? 'success' : 'failure'}`;
+
+  document.getElementById('completion-icon').textContent = succeeded ? '🎉' : '💪';
+  document.getElementById('completion-title').textContent = succeeded ? '任務完成！' : '繼續加油！';
   document.getElementById('completion-summary').textContent =
-    data.summary || '你完成了這次互動體驗！';
+    data.summary || (succeeded ? '你完成了這次互動體驗！' : '這次沒有達成任務目標，但每次嘗試都是學習機會！');
 
   const learnings = `關於${char.name}（${char.level}）的互動重點：\n` +
     char.traits.slice(0, 3).map(t => `• ${t}`).join('\n') +
     `\n\n情境「${scenario.name}」的溝通關鍵：\n` +
     (scenario.tips || []).map(t => `• ${t}`).join('\n');
 
-  document.getElementById('completion-learning').textContent = learnings;
+  const learningEl = document.getElementById('completion-learning');
+  learningEl.textContent = learnings;
+  learningEl.className = `completion-learning ${succeeded ? 'success' : 'failure'}`;
 
   document.documentElement.style.setProperty('--char-color', char.color);
   showScreen('completion');

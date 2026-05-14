@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>理解光譜的另一面 — 自閉症互動體驗</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/style.css?v=3" />
 </head>
 <body>
 
@@ -72,9 +72,8 @@
       <div class="chat-input-area">
         <textarea
           id="message-input"
-          placeholder="輸入你要說的話... (Enter 送出，Shift+Enter 換行)"
+          placeholder="輸入你要說的話..."
           rows="2"
-          onkeydown="handleKeyDown(event)"
         ></textarea>
         <button class="send-btn" onclick="sendMessage()">送出</button>
       </div>
@@ -106,8 +105,9 @@
 <!-- ── Screen 4: Completion ──────────────────────────────────────────── -->
 <div id="screen-completion" class="screen">
   <div class="completion-container">
-    <div class="completion-icon">🎉</div>
-    <h1>任務完成！</h1>
+    <span class="completion-result-badge" id="completion-badge"></span>
+    <div class="completion-icon" id="completion-icon"></div>
+    <h1 id="completion-title"></h1>
     <p class="completion-summary" id="completion-summary"></p>
     <div class="completion-learning" id="completion-learning"></div>
     <div class="completion-actions">
@@ -126,6 +126,7 @@
   </div>
 </div>
 
-<script src="/js/app.js?v=2"></script>
+<script src="/js/app.js?v=3"></script>
 </body>
+
 </html>

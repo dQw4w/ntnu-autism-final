@@ -13,7 +13,7 @@ from loguru import logger
 
 from characters import CHARACTERS
 from scenarios import SCENARIOS
-from llm_service import chat_with_llm
+from llm_service import chat_with_llm, GeminiServerError, get_paid_cost_data
 
 
 # ── Loguru setup ──────────────────────────────────────────────────────────────
@@ -176,6 +176,9 @@ async def chat(request: ChatRequest):
     try:
         response = await chat_with_llm(messages)
         return {"response": response}
+    except GeminiServerError as e:
+        logger.warning("chat Gemini server error  character={}  scenario={}", request.character_id, request.scenario_id)
+        raise HTTPException(status_code=503, detail="gemini_server_error")
     except Exception as e:
         logger.exception("chat endpoint failed  character={}  scenario={}", request.character_id, request.scenario_id)
         raise HTTPException(status_code=500, detail=str(e))
@@ -262,18 +265,30 @@ async def check_completion(request: CompletionCheckRequest):
     ]
 
     logger.info("check-completion  character={}  turns={}", request.character_id, len(request.messages))
-    try:
-        response = await chat_with_llm(messages)
-        cleaned = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-        result = json.loads(cleaned)
-        return result
-    except Exception:
-        logger.exception("check-completion failed or JSON parse error, falling back")
-        completed = len(request.messages) >= 6
-        return {
-            "completed": completed,
-            "summary": "你完成了這次互動體驗！透過和自閉症者的對話，相信你對他們的溝通方式有了更深的理解。",
-        }
+    last_err = None
+    for attempt in range(3):
+        try:
+            response = await chat_with_llm(messages)
+            cleaned = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+            result = json.loads(cleaned)
+            if "completed" not in result:
+                raise ValueError("missing 'completed' field")
+
+            return result
+        except Exception as e:
+            last_err = e
+            logger.warning("check-completion attempt {}/3 failed: {}", attempt + 1, e)
+
+    logger.error("check-completion all retries failed: {}", last_err)
+    return {
+        "completed": len(request.messages) >= 6,
+        "summary": "（評估系統發生錯誤）無法自動判斷，請自行回顧對話是否達成任務目標。",
+    }
+
+
+@app.get("/api/paid-cost")
+def paid_cost():
+    return get_paid_cost_data()
 
 
 # ── Static frontend (must be LAST) ────────────────────────────────────────────
