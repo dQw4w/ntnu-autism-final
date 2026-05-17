@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>理解光譜的另一面 — 自閉症互動體驗</title>
-  <link rel="stylesheet" href="/css/style.css?v=3" />
+  <link rel="stylesheet" href="/css/style.css?v=4" />
 </head>
 <body>
 
@@ -118,6 +118,84 @@
   </div>
 </div>
 
+<!-- ── Autism Info Button (fixed, always visible) ────────────────────── -->
+<button class="info-btn" onclick="openInfo()">📌 認識自閉症特徵</button>
+
+<!-- ── Autism Info Modal ──────────────────────────────────────────────── -->
+<div class="info-modal-backdrop" id="info-modal-backdrop" onclick="closeInfo()">
+  <div class="info-modal" onclick="event.stopPropagation()">
+    <button class="info-modal-close" onclick="closeInfo()">✕</button>
+
+    <h2 class="info-modal-title">📌 認識自閉症特徵</h2>
+    <p class="info-modal-subtitle">依據 DSM-5 診斷準則</p>
+
+    <blockquote class="info-definition">
+      「在多重情境中持續有社交溝通及社交互動的缺損，並伴隨侷限、重複的行為、興趣或活動模式。」
+    </blockquote>
+
+    <div class="info-section">
+      <h3 class="info-section-title">👥 A：社交溝通及互動缺損</h3>
+
+      <div class="info-item">
+        <div class="info-item-head">1. 社會–情緒相互性缺損</div>
+        <ul>
+          <li>無法正常開啟或回應社交互動、情感分享不足</li>
+        </ul>
+      </div>
+
+      <div class="info-item">
+        <div class="info-item-head">2. 非語言溝通行為缺損</div>
+        <ul>
+          <li>眼神接觸不足、缺乏臉部表情、異常的肢體語言</li>
+        </ul>
+      </div>
+
+      <div class="info-item">
+        <div class="info-item-head">3. 發展、維繫及理解人際關係困難</div>
+        <ul>
+          <li>缺乏社會性微笑</li>
+          <li>社交對話困難</li>
+          <li>無法察覺或回應他人情緒</li>
+          <li>難以參與群體遊戲</li>
+          <li>缺乏同理心</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3 class="info-section-title">🔄 B：侷限、重複行為及興趣模式</h3>
+
+      <div class="info-item">
+        <div class="info-item-head">1. 刻板或重複動作、語言</div>
+        <ul>
+          <li>不尋常的重複興趣與刻板行為、仿說、自創詞彙</li>
+        </ul>
+      </div>
+
+      <div class="info-item">
+        <div class="info-item-head">2. 固執常規、儀式化行為</div>
+        <ul>
+          <li>難接受生活習性或環境的改變、僵化思考</li>
+        </ul>
+      </div>
+
+      <div class="info-item">
+        <div class="info-item-head">3. 高度侷限或異常強烈的興趣</div>
+        <ul>
+          <li>局限的興趣，對物品不尋常的執迷</li>
+        </ul>
+      </div>
+
+      <div class="info-item">
+        <div class="info-item-head">4. 感官反應異常</div>
+        <ul>
+          <li>對聲音異常敏感、對疼痛異常敏感或反應過淡</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Loading Overlay ────────────────────────────────────────────────── -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner">
@@ -126,7 +204,7 @@
   </div>
 </div>
 
-<script src="/js/app.js?v=3"></script>
+<script src="/js/app.js?v=4"></script>
 </body>
 
 </html>

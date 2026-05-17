@@ -37,6 +37,7 @@ const API = {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${id}`).classList.add('active');
+  document.querySelector('.info-btn').style.display = id === 'landing' ? '' : 'none';
 }
 
 function showLoading(text = '思考中...') {
@@ -451,6 +452,15 @@ function tryAgain() {
   state.taskOpen = false;
   setupChat();
   showScreen('chat');
+}
+
+// ── Autism Info Modal ─────────────────────────────────────────────────────
+function openInfo() {
+  document.getElementById('info-modal-backdrop').classList.add('active');
+}
+
+function closeInfo() {
+  document.getElementById('info-modal-backdrop').classList.remove('active');
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────
