@@ -13,6 +13,9 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - PAID_GEMINI_API_KEY=${PAID_GEMINI_API_KEY:-}
       - PAID_GEMINI_ENABLED=${PAID_GEMINI_ENABLED:-true}
+      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:///./data/records.db}
+      - DATABASE_SSL=${DATABASE_SSL:-false}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
     volumes:

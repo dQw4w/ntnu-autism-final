@@ -8,6 +8,26 @@
 </head>
 <body>
 
+<!-- ── Screen 0: Nickname Entry ───────────────────────────────────────── -->
+<div id="screen-nickname" class="screen active">
+  <div class="landing-logo">🌈</div>
+  <h1>理解光譜的另一面</h1>
+  <p class="subtitle">透過互動，認識自閉症者的世界</p>
+  <div class="nickname-card">
+    <div class="nickname-prompt">請先輸入你的暱稱</div>
+    <p class="nickname-hint">暱稱將用於記錄本次體驗，不需填寫真實姓名</p>
+    <input
+      id="nickname-input"
+      class="nickname-input"
+      type="text"
+      placeholder="輸入暱稱..."
+      maxlength="20"
+      autocomplete="off"
+    />
+    <button class="nickname-submit-btn" onclick="submitNickname()">開始體驗 →</button>
+  </div>
+</div>
+
 <!-- ── Screen 1: Landing ─────────────────────────────────────────────── -->
 <div id="screen-landing" class="screen">
   <div class="landing-logo">🌈</div>

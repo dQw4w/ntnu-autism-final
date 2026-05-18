@@ -9,6 +9,10 @@ const state = {
   helperOpen: false,
   taskOpen: false,
   loading: false,
+  userId: null,
+  nickname: null,
+  sessionId: null,
+  sessionSaved: false,
 };
 
 // ── API ────────────────────────────────────────────────────────────────────
@@ -392,6 +396,9 @@ function showCompletionScreen(data) {
   learningEl.className = `completion-learning ${succeeded ? 'success' : 'failure'}`;
 
   document.documentElement.style.setProperty('--char-color', char.color);
+
+  saveSession(data.completed, data.summary);
+
   showScreen('completion');
 }
 
@@ -427,6 +434,21 @@ async function selectScenario(id) {
   state.messages = [];
   state.helperOpen = false;
   state.taskOpen = false;
+  state.sessionId = null;
+  state.sessionSaved = false;
+
+  if (state.userId) {
+    try {
+      const sess = await API.post('/api/sessions', {
+        user_id: state.userId,
+        character_id: state.selectedCharacter.id,
+        scenario_id: scenario.id,
+      });
+      state.sessionId = sess.id;
+    } catch (err) {
+      console.error('Failed to create session:', err);
+    }
+  }
 
   setupChat();
   showScreen('chat');
@@ -439,6 +461,10 @@ function goBack(screen) {
     state.selectedScenario = null;
     document.documentElement.style.setProperty('--char-color', '#6c63ff');
   }
+  // Save incomplete session when leaving chat without completing
+  if (screen === 'scenarios' && state.sessionId && !state.sessionSaved && state.messages.length > 0) {
+    saveSession();
+  }
   showScreen(screen);
 }
 
@@ -450,8 +476,56 @@ function tryAgain() {
   state.messages = [];
   state.helperOpen = false;
   state.taskOpen = false;
+  state.sessionId = null;
+  state.sessionSaved = false;
   setupChat();
   showScreen('chat');
+}
+
+// ── Nickname ───────────────────────────────────────────────────────────────
+async function submitNickname() {
+  const input = document.getElementById('nickname-input');
+  const nick = input.value.trim();
+  if (!nick) {
+    input.focus();
+    return;
+  }
+
+  const btn = document.querySelector('.nickname-submit-btn');
+  btn.disabled = true;
+  showLoading('儲存中...');
+
+  try {
+    const data = await API.post('/api/users', { nickname: nick });
+    state.userId = data.id;
+    state.nickname = data.nickname;
+    localStorage.setItem('autism_uid', data.id);
+    localStorage.setItem('autism_nick', data.nickname);
+  } catch (err) {
+    // Graceful degradation: allow use without recording
+    console.error('Failed to register user:', err);
+    state.userId = null;
+    state.nickname = nick;
+  } finally {
+    hideLoading();
+    btn.disabled = false;
+  }
+  showScreen('landing');
+}
+
+// ── Session recording ──────────────────────────────────────────────────────
+async function saveSession(result = null, summary = null) {
+  if (!state.sessionId || state.sessionSaved) return;
+  try {
+    await API.post(`/api/sessions/${state.sessionId}/save`, {
+      messages: state.messages,
+      result,
+      summary,
+    });
+    state.sessionSaved = true;
+  } catch (err) {
+    console.error('Failed to save session:', err);
+  }
 }
 
 // ── Autism Info Modal ─────────────────────────────────────────────────────
@@ -469,15 +543,29 @@ async function init() {
   try {
     state.characters = await API.get('/api/characters');
     renderCharacterCards();
-    showScreen('landing');
+
+    const savedId = localStorage.getItem('autism_uid');
+    const savedNick = localStorage.getItem('autism_nick');
+    if (savedId && savedNick) {
+      state.userId = parseInt(savedId, 10);
+      state.nickname = savedNick;
+      showScreen('landing');
+    } else {
+      showScreen('nickname');
+    }
   } catch (err) {
     document.getElementById('character-cards').innerHTML =
-      '<p style="color:white;opacity:0.8;text-align:center;padding:20px;">無法連線到後端伺服器。<br>請確認 FastAPI 服務已啟動（port 8000）。</p>';
-    showScreen('landing');
+      '<p style="color:white;opacity:0.8;text-align:center;padding:20px;">無法連線到後端伺服器。<br>請確認 FastAPI 服務已啟動。</p>';
+    showScreen('nickname');
     console.error(err);
   } finally {
     hideLoading();
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  document.getElementById('nickname-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitNickname();
+  });
+});
