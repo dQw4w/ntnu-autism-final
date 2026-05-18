@@ -491,36 +491,30 @@ async function submitNickname() {
     return;
   }
 
-  const btn = document.querySelector('.nickname-submit-btn');
-  btn.disabled = true;
+  state.nickname = nick;
 
-  // Reuse existing userId if same nickname, otherwise create a new user
+  // Reuse existing userId if same nickname — no API call needed
   const savedId = localStorage.getItem('autism_uid');
   const savedNick = localStorage.getItem('autism_nick');
   if (savedId && savedNick === nick) {
     state.userId = parseInt(savedId, 10);
-    state.nickname = nick;
     showScreen('landing');
-    btn.disabled = false;
     return;
   }
 
-  showLoading('儲存中...');
+  // Switch to landing immediately, register user in background
+  showScreen('landing');
+
   try {
     const data = await API.post('/api/users', { nickname: nick });
     state.userId = data.id;
     state.nickname = data.nickname;
-    localStorage.setItem('autism_uid', data.id);
+    localStorage.setItem('autism_uid', String(data.id));
     localStorage.setItem('autism_nick', data.nickname);
   } catch (err) {
     console.error('Failed to register user:', err);
     state.userId = null;
-    state.nickname = nick;
-  } finally {
-    hideLoading();
-    btn.disabled = false;
   }
-  showScreen('landing');
 }
 
 // ── Session recording ──────────────────────────────────────────────────────
