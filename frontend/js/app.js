@@ -493,8 +493,19 @@ async function submitNickname() {
 
   const btn = document.querySelector('.nickname-submit-btn');
   btn.disabled = true;
-  showLoading('儲存中...');
 
+  // Reuse existing userId if same nickname, otherwise create a new user
+  const savedId = localStorage.getItem('autism_uid');
+  const savedNick = localStorage.getItem('autism_nick');
+  if (savedId && savedNick === nick) {
+    state.userId = parseInt(savedId, 10);
+    state.nickname = nick;
+    showScreen('landing');
+    btn.disabled = false;
+    return;
+  }
+
+  showLoading('儲存中...');
   try {
     const data = await API.post('/api/users', { nickname: nick });
     state.userId = data.id;
@@ -502,7 +513,6 @@ async function submitNickname() {
     localStorage.setItem('autism_uid', data.id);
     localStorage.setItem('autism_nick', data.nickname);
   } catch (err) {
-    // Graceful degradation: allow use without recording
     console.error('Failed to register user:', err);
     state.userId = null;
     state.nickname = nick;
@@ -543,24 +553,20 @@ async function init() {
   try {
     state.characters = await API.get('/api/characters');
     renderCharacterCards();
-
-    const savedId = localStorage.getItem('autism_uid');
-    const savedNick = localStorage.getItem('autism_nick');
-    if (savedId && savedNick) {
-      state.userId = parseInt(savedId, 10);
-      state.nickname = savedNick;
-      showScreen('landing');
-    } else {
-      showScreen('nickname');
-    }
   } catch (err) {
     document.getElementById('character-cards').innerHTML =
       '<p style="color:white;opacity:0.8;text-align:center;padding:20px;">無法連線到後端伺服器。<br>請確認 FastAPI 服務已啟動。</p>';
-    showScreen('nickname');
     console.error(err);
   } finally {
     hideLoading();
   }
+
+  // Pre-fill nickname if returning user, but always show the nickname screen first
+  const savedNick = localStorage.getItem('autism_nick');
+  if (savedNick) {
+    document.getElementById('nickname-input').value = savedNick;
+  }
+  showScreen('nickname');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
