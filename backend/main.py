@@ -122,7 +122,7 @@ class CompletionCheckRequest(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "OK!"}
 
 
 @app.get("/api/characters")
