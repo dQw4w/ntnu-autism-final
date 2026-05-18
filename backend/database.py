@@ -19,8 +19,12 @@ _is_sqlite = DATABASE_URL.startswith("sqlite")
 _connect_args: dict = {}
 if _is_sqlite:
     _connect_args["check_same_thread"] = False
-elif os.getenv("DATABASE_SSL", "false").strip().lower() in ("1", "true", "yes"):
-    _connect_args["ssl"] = "require"
+else:
+    # Supabase routes through PgBouncer (transaction mode), which doesn't support
+    # prepared statements — disable asyncpg's statement cache to avoid the error.
+    _connect_args["statement_cache_size"] = 0
+    if os.getenv("DATABASE_SSL", "false").strip().lower() in ("1", "true", "yes"):
+        _connect_args["ssl"] = "require"
 
 engine = create_async_engine(DATABASE_URL, connect_args=_connect_args, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
